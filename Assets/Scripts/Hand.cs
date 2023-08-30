@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using UnityEngine.InputSystem;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR;
 
 public enum HandType
 {
@@ -19,11 +21,34 @@ public InputAction trackedAction = null;
 
 bool m_isCurrentlyTracked = false;
 
-List<MeshRenderer> m_currentRenderers = new List<MeshRenderer>();
+List<Renderer> m_currentRenderers = new List<Renderer>();
 
 Collider[] m_colliders = null;
 
+public XRBaseInteractor interactor = null;
+
 public bool isCollisionEnabled { get; private set;} = false;
+
+void Awake()
+{
+    if (interactor == null)
+    {
+        interactor = GetComponentInParent<XRBaseInteractor>();
+    }
+}
+
+
+private void OnEnable()
+{
+    interactor.onSelectEntered.AddListener(OnGrab);
+    interactor.onSelectExited.AddListener(OnRelease);
+}
+
+private void OnDisable()
+{
+    interactor.onSelectEntered.RemoveListener(OnGrab);
+    interactor.onSelectExited.RemoveListener(OnRelease);
+}
 
     void Start()
     {
@@ -49,7 +74,7 @@ public bool isCollisionEnabled { get; private set;} = false;
 
     public void Show()
     {
-        foreach(MeshRenderer renderer in m_currentRenderers)
+        foreach(Renderer renderer in m_currentRenderers)
         {
             renderer.enabled = true;
         }
@@ -60,8 +85,8 @@ public bool isCollisionEnabled { get; private set;} = false;
     public void Hide()
     {   
         m_currentRenderers.Clear();
-        MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>();
-        foreach(MeshRenderer renderer in renderers)
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        foreach(Renderer renderer in renderers)
         {
             renderer.enabled = false;
             m_currentRenderers.Add(renderer);
@@ -78,6 +103,32 @@ public bool isCollisionEnabled { get; private set;} = false;
         foreach (Collider collider in m_colliders)
         {
             collider.enabled = isCollisionEnabled;
+        }
+    }
+
+    void OnGrab(XRBaseInteractable grabbleObject)
+    {
+        HandControl ctrl = grabbleObject.GetComponent<HandControl>();
+
+         if (ctrl != null)
+        {
+            if(ctrl.hideHand)
+            {
+                Hide();
+            }
+        }
+    }
+
+    void OnRelease(XRBaseInteractable releaseObject)
+    {
+        HandControl ctrl = releaseObject.GetComponent<HandControl>();
+
+         if (ctrl != null)
+        {
+            if (ctrl.hideHand)
+            {
+                Show();
+            }
         }
     }
 }
