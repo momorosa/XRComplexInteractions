@@ -1,3 +1,4 @@
+using System;
 // using System.Reflection.Metadata;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,8 +22,10 @@ public bool isHidden {get; private set;} = false;
 public InputAction trackedAction = null;
 
 public InputAction gripAction = null;
+public InputAction triggerAction = null;
 public Animator handAnimator = null;
 int m_gripAmountParam = 0;
+int m_pointAmountParam = 0;
 
 bool m_isCurrentlyTracked = false;
 
@@ -60,14 +63,23 @@ private void OnDisable()
         m_colliders = GetComponentsInChildren<Collider>().Where(childCollider => !childCollider.isTrigger).ToArray();
         trackedAction.Enable();
         m_gripAmountParam = Animator.StringToHash("GripAmount");
+        m_pointAmountParam = Animator.StringToHash("PointAmount");
         gripAction.Enable();
+        triggerAction.Enable();
         Hide();
     }
 
     void UpdateAnimations()
     {
+        float pointAmount = triggerAction.ReadValue<float>();
+        handAnimator.SetFloat(m_pointAmountParam, pointAmount);
+
         float gripAmount = gripAction.ReadValue<float>();
-        handAnimator.SetFloat(m_gripAmountParam, gripAmount);
+        handAnimator.SetFloat(m_gripAmountParam, Mathf.Clamp01(gripAmount + pointAmount));  
+
+        // Debug.Log("Grip Amount: " + gripAction.ReadValue<float>());
+        // Debug.Log("Trigger Amount: " + triggerAction.ReadValue<float>());
+        // Debug.Log($"Grip Amount: {gripAmount}, Point Amount: {pointAmount}, Combined: {Mathf.Clamp01(gripAmount + pointAmount)}");
     }
 
     void Update()
