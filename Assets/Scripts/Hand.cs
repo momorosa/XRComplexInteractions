@@ -1,3 +1,4 @@
+// using System.Reflection.Metadata;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,6 +19,10 @@ public class Hand : MonoBehaviour
 public HandType type = HandType.Left;
 public bool isHidden {get; private set;} = false;
 public InputAction trackedAction = null;
+
+public InputAction gripAction = null;
+public Animator handAnimator = null;
+int m_gripAmountParam = 0;
 
 bool m_isCurrentlyTracked = false;
 
@@ -54,7 +59,15 @@ private void OnDisable()
     {
         m_colliders = GetComponentsInChildren<Collider>().Where(childCollider => !childCollider.isTrigger).ToArray();
         trackedAction.Enable();
+        m_gripAmountParam = Animator.StringToHash("GripAmount");
+        gripAction.Enable();
         Hide();
+    }
+
+    void UpdateAnimations()
+    {
+        float gripAmount = gripAction.ReadValue<float>();
+        handAnimator.SetFloat(m_gripAmountParam, gripAmount);
     }
 
     void Update()
@@ -70,6 +83,8 @@ private void OnDisable()
             m_isCurrentlyTracked = false;
             Hide();
         }
+
+        UpdateAnimations();
     }
 
     public void Show()
